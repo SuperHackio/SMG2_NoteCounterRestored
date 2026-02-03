@@ -1,11 +1,7 @@
-#include "syati.h"
+#include "kamek/hooks.h"
 #include "Game/Screen/NoteCounterExt.h"
 
-#if defined TWN || defined KOR
-#define REGIONOFF 0x10
-#else
-#define REGIONOFF 0
-#endif
+// Currently this doesn't use ClassExtensions. Once SMG1 has Class Extensions, I'll switch to using that.
 
 NoteCounterExt::NoteCounterExt(const char* pName) : NoteCounter(pName) {
 	mPaneRumbler = 0;
@@ -68,12 +64,27 @@ void NoteCounter_add(NoteCounterExt* pLayout)
 	pLayout->tryEndDisp();
 }
 
-kmCall(0x804857E8+REGIONOFF, NoteCounter_init);
-kmCall(0x80485AF4+REGIONOFF, NoteCounter_exeHideToShow);
-kmWrite32(0x80485AF8+REGIONOFF, 0x48000064);
-kmCall(0x80485A1C+REGIONOFF, NoteCounter_exeShowToHide);
-kmWrite32(0x80485A20+REGIONOFF, 0x48000064);
-kmCall(0x80485854+REGIONOFF, NoteCounter_declareNoteNumMaxAndMelody);
-kmCall(0x804859E0+REGIONOFF, NoteCounter_add);
-kmCall(0x80471760+REGIONOFF, createNoteCounterExt);
-kmWrite32(0x80471764+REGIONOFF, 0x48000014);
+// Hooks and Symbols
+extern const u8 init__11NoteCounterFRC12JMapInfoIter;
+extern const u8 exeHideToShow__11NoteCounterFv;
+extern const u8 exeShowToHide__11NoteCounterFv;
+extern const u8 declareNoteNumMaxAndMelody__11NoteCounterFP9LiveActorllf;
+extern const u8 add__11NoteCounterFv;
+extern const u8 __ct__21GameSceneLayoutHolderFv;
+
+kmCall(&init__11NoteCounterFRC12JMapInfoIter + 0x18, NoteCounter_init);
+kmCall(&exeHideToShow__11NoteCounterFv + 0x34, NoteCounter_exeHideToShow);
+kmWrite32(&exeHideToShow__11NoteCounterFv + 0x38, 0x48000064);
+kmCall(&exeShowToHide__11NoteCounterFv + 0x1C, NoteCounter_exeShowToHide);
+kmWrite32(&exeShowToHide__11NoteCounterFv + 0x20, 0x48000064);
+kmCall(&declareNoteNumMaxAndMelody__11NoteCounterFP9LiveActorllf + 0x34, NoteCounter_declareNoteNumMaxAndMelody);
+
+#if defined(SB4)
+kmCall(&add__11NoteCounterFv + 0x120, NoteCounter_add);
+kmCall(&__ct__21GameSceneLayoutHolderFv + 0x180, createNoteCounterExt);
+kmWrite32(&__ct__21GameSceneLayoutHolderFv + 0x184, 0x48000014);
+#elif defined (RMG)
+kmCall(&add__11NoteCounterFv + 0x110, NoteCounter_add);
+kmCall(&__ct__21GameSceneLayoutHolderFv + 0x15C, createNoteCounterExt);
+kmWrite32(&__ct__21GameSceneLayoutHolderFv + 0x160, 0x48000014);
+#endif
